@@ -11,9 +11,10 @@
 # forward feed
 
 # Todo:
-# regularization
-# data normalization
-# cost function
+# paper uses LR 0.3, momentum 0.6, epochs 5000-30,000
+# regularization ? drop out, L1? L2
+# data normalization (0-1) total sunspots for a year
+# cost function (MSE)
 
 
 
@@ -71,7 +72,25 @@ def read_data_file():
     # drop month, day, year now that date is combined
     data = data[['Sunspots']]
 
-    # x is today's data, shift by 1 so y is tomorrow's data
+    # daily has 72,834 samples
+    weekly_data = data.resample('W').sum()      # 10406 samples
+    monthly_data = data.resample('M').sum()     # 2393
+    yearly_data = data.resample('A').sum()      # year end, 200 samples
+
+
+
+    plt.figure(figsize=(16,16))
+    plt.plot(data['Sunspots'], label="Daily Sunspots")
+    plt.plot(weekly_data['Sunspots'], label='Weekly')
+    plt.plot(monthly_data['Sunspots'], label='Monthly')
+    plt.plot(yearly_data['Sunspots'], label='Yearly')
+    plt.legend(loc='best')
+    plt.title("Sunspot data")
+    plt.savefig("SunspotData.png")
+    plt.show()
+
+    
+    # x is today's data, shift by 1 so y is next number in sequence
     x = data['Sunspots'].values
     y = data['Sunspots'].shift(1).values
 
@@ -86,6 +105,9 @@ def read_data_file():
 
 x, y = read_data_file()
 
+
+
+'''
 ######################################################################
 # network constants
 #######################################################################
@@ -148,7 +170,7 @@ class FullyConnected:
         predicted = T.sum(out)                  # sum all incoming 
 
         # error 
-        cost = (predicted - Y)
+        cost = (predicted - Y) **2
 
          
         gradients = T.grad(cost, self.parameters)    # derivatives
@@ -190,4 +212,4 @@ class FullyConnected:
 
 network = FullyConnected()
 network.train(x, y)
-
+'''
