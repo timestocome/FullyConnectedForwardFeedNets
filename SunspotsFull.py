@@ -78,7 +78,15 @@ def read_data_file():
     yearly_data = data.resample('A').sum()      # year end, 200 samples
 
 
+    # choose yearly, monthly, weekly or daily data
+    data = yearly_data
 
+    # scale data
+    data['Sunspots'] = data['Sunspots'] / data['Sunspots'].max()
+
+
+    '''
+    # quick check on data
     plt.figure(figsize=(16,16))
     plt.plot(data['Sunspots'], label="Daily Sunspots")
     plt.plot(weekly_data['Sunspots'], label='Weekly')
@@ -88,7 +96,7 @@ def read_data_file():
     plt.title("Sunspot data")
     plt.savefig("SunspotData.png")
     plt.show()
-
+    '''
     
     # x is today's data, shift by 1 so y is next number in sequence
     x = data['Sunspots'].values
@@ -107,13 +115,13 @@ x, y = read_data_file()
 
 
 
-'''
+
 ######################################################################
 # network constants
 #######################################################################
 
 learning_rate = 0.001
-epochs = 2
+epochs = 5
 n_samples = len(x)
 n_hidden = 11
 n_in = 1
@@ -193,12 +201,12 @@ class FullyConnected:
         for i in range(epochs):
             
             cost = 0
+            predictions = []
             for j in range(len(y)):
                 c = self.train_op(x[j], y[j])
                 cost += c 
 
-                p = self.predict_op(x[j])
-                print("x: ", x[j], "y: ", y[j], "predicted: ", p, "cost: ", c)
+                predictions.append( self.predict_op(x[j]))
             
             # output cost so user can see training progress
             cost /= len(y)
@@ -206,10 +214,14 @@ class FullyConnected:
             costs.append(cost)
             
         # graph to show accuracy progress - cost function should decrease
-        #plt.plot(costs)
-        #plt.show()
+        plt.plot(y, label='Actual')
+        plt.plot(predictions, label='Predicted')
+        plt.legend(loc='best')
+        plt.title("Yearly Sunspot prediction, fully connected forward feed")
+        plt.savefig('yearly_sunspots.png')
+        plt.show()
 
 
 network = FullyConnected()
 network.train(x, y)
-'''
+
