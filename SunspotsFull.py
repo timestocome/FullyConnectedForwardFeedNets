@@ -70,19 +70,19 @@ def read_data_file():
     data = data[['Sunspots']]
 
     # daily has 72,834 samples
-    weekly_data = data.resample('W').sum()      # 10406 samples
-    monthly_data = data.resample('M').sum()     # 2393
-    yearly_data = data.resample('A').sum()      # year end, 200 samples
-
+    #weekly_data = data.resample('W').sum()      # 10406 samples
+    #monthly_data = data.resample('M').sum()     # 2393
+    #yearly_data = data.resample('A').sum()      # year end, 200 samples
 
     # choose yearly, monthly, weekly or daily data
-    data = monthly_data
+    #data = weekly_data
 
     # scale data
     data['Sunspots'] = data['Sunspots'] / data['Sunspots'].max()
 
-    # weights equal to zero break network
+    # inputs equal to zero break network
     data['Sunspots'] += 0.0001
+
 
     '''
     # quick check on data
@@ -96,22 +96,36 @@ def read_data_file():
     plt.savefig("SunspotData.png")
     plt.show()
     '''
+
+    # pull out 10% of data for validation
+    n_valid = len(data) // 10
     
     # x is today's data, shift by 1 so y is next number in sequence
     x = data['Sunspots'].values
     y = data['Sunspots'].shift(1).values
 
+    
     # remove as many items as we've shifted from top of array
     x = np.delete(x, 0)
     y = np.delete(y, 0)
 
-    x = np.asarray(x.reshape(len(x)))
-    y = np.asarray(y.reshape(len(x)))
+    # split into training and validation sets
+    x_train = x[0:len(data)-n_valid]
+    y_train = y[0:len(data)-n_valid]
+    x_valid = x[len(x_train):-1]
+    y_valid = y[len(y_train):-1]
+    
+    #print(len(x_train), len(y_train), len(x_valid), len(y_valid))
 
-    return x.astype('float32'), y.astype('float32')
 
-x, y = read_data_file()
+    x = np.asarray(x_train.reshape(len(x_train)))
+    y = np.asarray(y_train.reshape(len(y_train)))
+    x_valid = np.asarray(x_valid.reshape(len(x_valid)))
+    y_valid = np.asarray(y_valid.reshape(len(y_valid)))
 
+    return x.astype('float32'), y.astype('float32'), x_valid.astype('float32'), y_valid.astype('float32')
+
+x, y, x_valid, y_valid = read_data_file()
 
 
 
@@ -223,17 +237,34 @@ class FullyConnected:
             costs.append(cost)
             
 
-          
         # graph to show accuracy progress - cost function should decrease
         plt.figure(figsize=(18,18))
         plt.plot(y, label='Actual')
-        plt.plot(predictions, label='Predicted', linewidth=2, alpha=0.5)
+        plt.plot(predictions, label='Predicted', linewidth=2, alpha=0.4)
         plt.legend(loc='best')
-        plt.title("Monthly Sunspot prediction, fully connected forward feed")
-        plt.savefig('monthly_sunspots.png')
+        plt.title("Daily Sunspot prediction, fully connected forward feed")
+        plt.savefig('daily_sunspots.png')
         plt.show()
         
 
+
+        
+        # predictions on unseen data
+        new_predictions = []
+        for k in range(len(x_valid)):
+            p = self.predict_op(x_valid[k])
+            new_predictions.append(p)
+
+
+        # plot predicitons on unseen data
+        plt.figure(figsize=(18,18))
+        plt.plot(y_valid, label='Actual')
+        plt.plot(new_predictions, label='Predicted', linewidth=2, alpha=0.4)
+        plt.legend(loc='best')
+        plt.title("Daily Sunspot prediction on unseen data, fully connected forward feed")
+        plt.savefig('daily_sunspots_validate_model.png')
+        plt.show()
+        
 
 network = FullyConnected()
 network.train(x, y)
