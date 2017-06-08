@@ -7,15 +7,12 @@
 # http://surface.syr.edu/cgi/viewcontent.cgi?article=1056&context=eecs_techreports
 
 
-# Finished:
-# forward feed
+
 
 # Todo:
 # paper uses LR 0.3, momentum 0.6, epochs 5000-30,000
 # regularization ? drop out, L1? L2
-# data normalization (0-1) total sunspots for a year
-# cost function (MSE)
-
+# hold out data to see if network is only memorizing data
 
 
 
@@ -79,11 +76,13 @@ def read_data_file():
 
 
     # choose yearly, monthly, weekly or daily data
-    data = yearly_data
+    data = monthly_data
 
     # scale data
     data['Sunspots'] = data['Sunspots'] / data['Sunspots'].max()
 
+    # weights equal to zero break network
+    data['Sunspots'] += 0.0001
 
     '''
     # quick check on data
@@ -120,13 +119,13 @@ x, y = read_data_file()
 # network constants
 #######################################################################
 
-learning_rate = 0.001
-epochs = 5
+learning_rate = 0.0001
+epochs = 2
 n_samples = len(x)
 n_hidden = 11
 n_in = 1
 n_out = 1
-
+L1 = 0.0        # network does better with out regularization - probably means it's memorizing things
 
 ########################################################################
 # test
@@ -177,15 +176,21 @@ class FullyConnected:
         # predicted
         predicted = T.sum(out)                  # sum all incoming 
 
-        # error 
-        cost = (predicted - Y) **2
+        # use to see which weight blow up and for regularization if used
+        #sum_weights_in = T.sum(self.W_in)
+        #sum_hidden_weights = T.sum(self.W_h)
+        #sum_weights_out = T.sum(self.W_out)
 
-         
+
+        # error - regularization
+        cost = (predicted - Y) **2 #- sum_hidden_weights * L1
+
         gradients = T.grad(cost, self.parameters)    # derivatives
         updates = [(p, p - learning_rate * g) for p, g in zip(self.parameters, gradients)]
 
 
         # training and prediction functions
+        #self.weights_op = theano.function(inputs=[], outputs=[sum_weights_in, sum_hidden_weights, sum_weights_out])
         self.predict_op = theano.function(inputs = [X], outputs = predicted)
 
         self.train_op = theano.function(
@@ -205,21 +210,29 @@ class FullyConnected:
             for j in range(len(y)):
                 c = self.train_op(x[j], y[j])
                 cost += c 
-
+                #print(x[j], y[j], c)
                 predictions.append( self.predict_op(x[j]))
+                
+                # check weights to see which ones are blowing up
+                #print(self.weights_op())
+
             
             # output cost so user can see training progress
             cost /= len(y)
             print ("i:", i, "cost:", cost, "%")
             costs.append(cost)
             
+
+          
         # graph to show accuracy progress - cost function should decrease
+        plt.figure(figsize=(18,18))
         plt.plot(y, label='Actual')
-        plt.plot(predictions, label='Predicted')
+        plt.plot(predictions, label='Predicted', linewidth=2, alpha=0.5)
         plt.legend(loc='best')
-        plt.title("Yearly Sunspot prediction, fully connected forward feed")
-        plt.savefig('yearly_sunspots.png')
+        plt.title("Monthly Sunspot prediction, fully connected forward feed")
+        plt.savefig('monthly_sunspots.png')
         plt.show()
+        
 
 
 network = FullyConnected()
