@@ -1,5 +1,5 @@
 # Sunspots and Stock Indexes
-Predict sunspots using a fully connected neural network in Theano/Python
+Predict sunspots and Nasdaq using fully connected neural networks in Theano/Python
 
 This is a somewhat simple data set that will be good practice for building a network to do time-series predictions. This works extrememly well at predicting the next period's number of spots when given the actual number for this period
 
