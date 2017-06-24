@@ -13,3 +13,7 @@ Predict Nasdaq one month ahead using the fully connected forward feed network de
 
 Data https://github.com/timestocome/StockMarketData
 
+
+Other papers:
+https://is.muni.cz/th/422802/fi_b/bakalarka_final.pdf Prediction of Financial Markets Using Deep Learning
+
